@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Météo Concept API</title>
+</head>
+<body>
+  <h1>Météo d'une commune</h1>
+
+  <!-- Zone de saisie et bouton pour récupérer la météo -->
+  <input id="commune" placeholder="Entrez une commune ou un code postal" />
+  <button onclick="getWeather()">Obtenir la météo</button>
+  <button onclick="resetEverything()">Effacer</button>
+
+  <!-- Zone d'affichage des résultats -->
+  <pre id="result"></pre>
+
+  <script>
+    const API_TOKEN = "f7d06d2b23546fe98fcab761fda383ba1fc4c9be665e3f1a0e2e9d238538a18a"; // Remplace par ton vrai token
+
+    // Fonction pour récupérer les données météo
+    async function getWeather() {
+      const commune = document.getElementById("commune").value;
+      const result = document.getElementById("result");
+
+      try {
+        // Requête pour obtenir les coordonnées de la commune
+        const cityResponse = await fetch(`https://api.meteo-concept.com/api/location/cities?token=${API_TOKEN}&search=${commune}`);
+        const cityData = await cityResponse.json();
+
+        // Vérification si la commune est trouvée
+        if (!cityData.cities?.length) {
+          result.textContent = "Commune non trouvée.";
+          return;
+        }
+
+        // Récupération des données de la commune et des prévisions météo
+        const { latitude, longitude, insee } = cityData.cities[0];
+        const weatherResponse = await fetch(`https://api.meteo-concept.com/api/forecast/daily/0?token=${API_TOKEN}&insee=${insee}`);
+        const weatherData = await weatherResponse.json();
+        const { rr10: rain, wind10m: wind, dirwind10m: windDir } = weatherData.forecast;
+
+        // Affichage des résultats
+        result.textContent = `
+Commune : ${commune}
+Latitude : ${latitude} °
+Longitude : ${longitude} °
+Cumul de pluie : ${rain} mm
+Vent moyen : ${wind} km/h
+Direction du vent : ${windDir} °
+        `;
+      } catch (error) {
+        result.textContent = "Erreur : " + error.message;
+      }
+    }
+
+    // Fonction pour réinitialiser la recherche
+    function resetEverything() {
+      document.getElementById("commune").value = "";
+      document.getElementById("result").textContent = "";
+    }
+  </script>
+</body>
+</html>
